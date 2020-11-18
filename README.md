@@ -1,4 +1,4 @@
-# recoil-tutotrial
+# recoil-tutorial
 
 [Recoil Documentation](https://recoiljs.org/docs/introduction/getting-started)
 
