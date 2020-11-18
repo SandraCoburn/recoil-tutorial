@@ -1,5 +1,5 @@
 import React from 'react';
-import { atom, RecoilRoot, useRecoilState, useRecoilValue } from 'recoil';
+import { atom, selector, useRecoilState, useRecoilValue } from 'recoil';
 import './App.css';
 
 const inventory = {
@@ -19,16 +19,21 @@ const cartState = atom({
   default: {},
 });
 
+const shippingState = atom({
+  key: 'shippingState',
+  default: 'US',
+});
+
 function App() {
   return (
     <div>
       <AvailableItems />
       <Cart />
+      <Shipping />
+      <Totals />
     </div>
   );
 }
-
-export default App;
 
 function AvailableItems() {
   const [cart, setCart] = useRecoilState(cartState);
@@ -90,3 +95,55 @@ function CartItems() {
     </ul>
   );
 }
+const totalState = selector({
+  key: 'totalState',
+  // get is a function that receives a function called get
+  get: ({ get }) => {
+    const cart = get(cartState);
+    const shipping = get(shippingState);
+    const subtotal = Object.entries(cart).reduce(
+      (acc, [id, quantity]) => acc + inventory[id].price * quantity,
+      0
+    );
+    const shippingTotal = destinations[shipping];
+    return {
+      subtotal,
+      shipping: shippingTotal,
+      total: subtotal + shippingTotal,
+    };
+  },
+});
+
+function Shipping() {
+  const [shipping, setShipping] = useRecoilState(shippingState);
+  return (
+    <div>
+      <h2>Shipping</h2>
+      {Object.entries(destinations).map(([country, price]) => (
+        <button
+          onClick={() => {
+            setShipping(country);
+          }}
+        >
+          {country} @ {price}
+          {country === shipping ? <span> ^</span> : ''}
+        </button>
+      ))}
+    </div>
+  );
+}
+function Totals() {
+  const totals = useRecoilValue(totalState);
+  return (
+    <div>
+      <h2>Totals</h2>
+      <p>Subtotal: ${totals.subtotal.toFixed(2)}</p>
+      <p>Shipping: ${totals.shipping.toFixed(2)}</p>
+      <p>
+        <strong>Total: ${totals.total.toFixed(2)}</strong>
+      </p>
+    </div>
+  );
+}
+
+export default App;
